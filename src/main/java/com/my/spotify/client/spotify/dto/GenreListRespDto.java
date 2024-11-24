@@ -1,4 +1,4 @@
-package com.my.spotify.client.dto;
+package com.my.spotify.client.spotify.dto;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;

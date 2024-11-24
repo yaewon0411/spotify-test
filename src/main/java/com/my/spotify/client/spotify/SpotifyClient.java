@@ -1,7 +1,10 @@
-package com.my.spotify.client;
+package com.my.spotify.client.spotify;
 
-import com.my.spotify.client.dto.GenreListRespDto;
-import com.my.spotify.client.dto.SearchRespDto;
+import com.my.spotify.client.spotify.dto.GenreListRespDto;
+import com.my.spotify.client.spotify.dto.SearchRespDto;
+import com.my.spotify.client.spotify.dto.TokenRespDto;
+import com.my.spotify.client.spotify.ex.ErrorCode;
+import com.my.spotify.client.spotify.ex.SpotifyApiException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hc.core5.http.ParseException;
@@ -20,42 +23,36 @@ import java.io.IOException;
 public class SpotifyClient {
 
     private final SpotifyApi spotifyApi;
+    private final SpotifyTokenManager spotifyTokenManager;
     private final String q = "genre: ";
+
 
     // 장르에 따른 트랙 리스트 검색
     public SearchRespDto searchTrack(String genre){
-        try {
+        return executeWithValidToken(() -> {
             Paging<Track> trackPage = spotifyApi.searchTracks(q + genre)
                     .build()
                     .execute();
             return new SearchRespDto(trackPage);
-        } catch (IOException | SpotifyWebApiException | ParseException e) {
-            log.error("장르 기반 트랙 조회 중 에러 발생: {}", e.getMessage(), e);
-            throw new RuntimeException(e);
-        }
-    }
-
-    //액세스 토큰 발급
-    public void getAccessToken() {
-        try {
-            ClientCredentials execute = spotifyApi.clientCredentials()
-                    .build()
-                    .execute();
-            System.out.println("execute.getAccessToken() = " + execute.getAccessToken());
-            spotifyApi.setAccessToken(execute.getAccessToken());
-        } catch (IOException | SpotifyWebApiException | ParseException e) {
-            log.error("토큰 발급 중 에러 발생: {}", e.getMessage(), e);
-            throw new RuntimeException(e);
-        }
+        }, String.format("장르 '%s' 기반 트랙 조회 중 에러 발생", genre));
     }
 
     //spotify에서 제공하는 장르 목록 조회
     public GenreListRespDto getAvailableGenres(){
-        try {
+        return executeWithValidToken(() -> {
             String[] genreList = spotifyApi.getAvailableGenreSeeds().build().execute();
             return new GenreListRespDto(genreList);
-        } catch (IOException | SpotifyWebApiException | ParseException e) {
-            throw new RuntimeException(e);
+        }, "장르 목록 조회 중 에러 발생");
+    }
+
+
+    private <T> T executeWithValidToken(SpotifyApiCall<T> apiCall, String errorMsg){
+        try {
+            spotifyApi.setAccessToken(spotifyTokenManager.getValidToken());
+            return apiCall.execute();
+        } catch (Exception e){
+            log.error(errorMsg);
+            throw new SpotifyApiException(e);
         }
     }
 }

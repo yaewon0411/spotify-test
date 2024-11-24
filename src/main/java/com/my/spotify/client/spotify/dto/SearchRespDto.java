@@ -1,4 +1,4 @@
-package com.my.spotify.client.dto;
+package com.my.spotify.client.spotify.dto;
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;

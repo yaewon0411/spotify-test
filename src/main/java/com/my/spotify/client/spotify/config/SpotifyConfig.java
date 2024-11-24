@@ -1,4 +1,4 @@
-package com.my.spotify.client.config;
+package com.my.spotify.client.spotify.config;
 
 import jakarta.annotation.PostConstruct;
 import org.aspectj.lang.annotation.After;
